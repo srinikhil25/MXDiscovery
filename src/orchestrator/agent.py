@@ -215,7 +215,7 @@ class MXDiscoveryAgent:
             response = ollama.chat(
                 model=self.model,
                 messages=full_messages,
-                options={"temperature": 0.3, "num_ctx": 8192},
+                options={"temperature": 0.3, "num_ctx": 8192, "num_gpu": 99},
             )
             assistant_msg = response["message"]["content"]
             self.messages.append({"role": "assistant", "content": assistant_msg})

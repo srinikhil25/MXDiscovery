@@ -10,10 +10,11 @@ project:
 
 llm:
   provider: "ollama"
-  model: "qwen2.5:14b"
+  model: "qwen2.5:7b"              # 7B fits in 8GB VRAM entirely on GPU
   embedding_model: "nomic-embed-text"
   temperature: 0.1
   context_window: 32768
+  num_gpu: 99                       # Force ALL layers to GPU (don't touch RAM)
   base_url: "http://localhost:11434"
 
 database:

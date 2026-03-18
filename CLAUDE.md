@@ -1,12 +1,14 @@
 # MXDiscovery - Project Intelligence
 
 ## What Is This Project?
+
 MXDiscovery is a computational pipeline for discovering novel non-toxic MXene composites for wearable thermoelectric energy harvesting. It is NOT a chatbot — it is a scientific discovery engine with a chat interface.
 
 ## Who Is The User?
-- **Name:** Srini
+
+- **Name:** SriNikhil
 - **Position:** Masters student at Shizuoka University, Japan
-- **Lab:** Materials science lab with FULL MXene synthesis capabilities (etching, delamination, film fabrication)
+- **Lab:** Ikeda-Hamasaki laboratory, Advanced Device Research Division, Research institute of electronics, Shizuoka University
 - **Hardware:** Intel i7, 8 GB RAM, NVIDIA RTX 4060 8 GB VRAM, Windows 11
 - **Python:** 3.11.9 (venv at D:/MXDiscovery/venv/)
 - **Budget:** Zero — open-source only
@@ -14,12 +16,14 @@ MXDiscovery is a computational pipeline for discovering novel non-toxic MXene co
 - **Career goal:** PhD admission (using this work as portfolio) + build lab reputation in materials informatics
 
 ## Project Goals (Priority Order)
+
 1. **Discover a new non-toxic wearable MXene composite** — computationally predict AND experimentally validate in their lab
 2. **Contribute to materials informatics as a field** — not just use tools, but define methodology
 3. **Publish in top journals** — Paper 1: Digital Discovery (RSC), Paper 2: npj Computational Materials
 4. **Collaborate with top universities** — Priority: USA (Gogotsi/Drexel, Anasori/Purdue, Ong/UCSD) > Japan (NIMS) > Europe (Cambridge) > India (IIT/IISc)
 
 ## Application Focus
+
 - **Wearable thermoelectrics** — body temperature ~310K
 - **Non-toxic constraint** — safe for skin contact (ISO 10993 compliance)
 - **Safe M-elements:** Ti, Zr, Nb, Ta, Hf, Sc, Mo
@@ -28,6 +32,7 @@ MXDiscovery is a computational pipeline for discovering novel non-toxic MXene co
 - **Target properties:** Seebeck coefficient, electrical conductivity, thermal conductivity, power factor (PF = S²σ), ZT = PF×T/κ
 
 ## Architecture
+
 ```
 Stage 1a: paper_fetcher.py    → Semantic Scholar API → papers.jsonl
 Stage 1b: data_extractor.py   → Ollama LLM extraction → extracted_records.jsonl
@@ -44,15 +49,17 @@ Entry:    pipeline.py          → Main orchestrator connecting all stages
 ```
 
 ## Key Technical Decisions
+
 - **Python 3.11** (not 3.13) — PyTorch requires ≤3.12
 - **BoltzTraP2** — NOT installed on Windows (needs Fortran). Will install in WSL2 for Stage 6 only.
 - **CHGNet** as primary ML potential (MACE as optional alternative)
-- **Qwen2.5:14b** via Ollama for LLM tasks (fits in 8GB VRAM at Q4)
+- **Qwen2.5:7b** via Ollama (NOT 14b — 14b crashed with 8GB RAM). 7b fits entirely in GPU VRAM with `num_gpu: 99`, leaving RAM free for Python/ASE. 7b is sufficient because LLM only does text extraction and routing, not scientific reasoning.
 - **SQLite** for structured data (not Postgres — zero config)
 - **Toxicity screening uses weakest-link scoring** — overall score = minimum element score
 - **TOPSIS** for multi-criteria ranking (weights: ZT=0.25, PF=0.20, S=0.15, stability=0.15, synth=0.15, novelty=0.10)
 
 ## Novel Contributions (What Makes This Publishable)
+
 1. **Composition-space gap analysis** for MXene thermoelectrics — systematic identification of unexplored regions
 2. **Toxicity-constrained screening** — biocompatibility filter integrated into computational discovery (new for any 2D material)
 3. **CHGNet/MACE benchmark for MXene interfaces** — first reported accuracy data
@@ -60,12 +67,14 @@ Entry:    pipeline.py          → Main orchestrator connecting all stages
 5. **Fully open-source, consumer GPU** — democratized materials discovery
 
 ## Documentation Requirements
+
 - **EVERY module** must have detailed docstrings explaining: algorithm, data structures, techniques, and scientific rationale
 - **Implementation guide** lives at: docs/MXDiscovery_Implementation_Guide.docx
 - User wants to UNDERSTAND everything, not just run it — explain the "why" not just the "how"
 - Bridge materials science and CS concepts (user knows materials, learning CS)
 
 ## File Locations
+
 - Project root: `D:/MXDiscovery/`
 - Config: `D:/MXDiscovery/config/config.yaml`
 - Source code: `D:/MXDiscovery/src/`
@@ -74,6 +83,7 @@ Entry:    pipeline.py          → Main orchestrator connecting all stages
 - Virtual env: `D:/MXDiscovery/venv/` (Python 3.11.9)
 
 ## Current State (Update This After Each Session)
+
 - [x] Project structure created
 - [x] All core modules written (paper_fetcher, data_extractor, database, gap_analyzer, structure_generator, stability_screener, te_predictor, ranker, toxicity_screener, qe_manager, agent, pipeline)
 - [x] Virtual environment created (Python 3.11)
@@ -92,6 +102,7 @@ Entry:    pipeline.py          → Main orchestrator connecting all stages
 - [ ] Paper 2 draft (npj Computational Materials)
 
 ## Rules
+
 1. **ALWAYS commit to GitHub after implementing a new feature, change, or fix.** Use descriptive commit messages explaining what was added/changed and why. Tag significant milestones (v0.1.0, v0.2.0, etc.).
 2. **NEVER fabricate scientific data** — if unsure, say so explicitly
 3. **ALWAYS explain algorithms and techniques** in docstrings and to the user — they want to learn

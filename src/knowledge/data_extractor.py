@@ -223,7 +223,7 @@ class DataExtractor:
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 format="json",
-                options={"temperature": 0.1, "num_ctx": 4096},
+                options={"temperature": 0.1, "num_ctx": 4096, "num_gpu": 99},
             )
             return response["message"]["content"]
         except Exception as e:
