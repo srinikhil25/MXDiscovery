@@ -1,0 +1,70 @@
+# =============================================================================
+# MXDiscovery - Dependencies
+# =============================================================================
+# INSTALL ORDER (run these commands in sequence):
+#
+#   Step 1: Activate venv
+#       .\venv\Scripts\activate           (PowerShell)
+#       source venv/Scripts/activate      (Git Bash)
+#
+#   Step 2: Install PyTorch with CUDA FIRST
+#       pip install torch torchvision --index-url https://download.pytorch.org/whl/cu121
+#
+#   Step 3: Install this file
+#       pip install -r requirements.txt
+#
+#   Step 4: Install BoltzTraP2 inside WSL2 (NOT Windows - needs Fortran)
+#       See BOLTZTRAP2_NOTE below
+# =============================================================================
+
+# --- Core Scientific Stack ---
+numpy
+scipy
+pandas
+matplotlib
+scikit-learn
+
+# --- Atomic Simulation ---
+ase
+pymatgen
+mp-api
+
+# --- ML Interatomic Potentials ---
+chgnet
+# mace-torch              # Optional: pip install mace-torch (if chgnet isn't enough)
+alignn
+
+# --- Thermoelectric ---
+# BOLTZTRAP2_NOTE:
+# BoltzTraP2 requires a Fortran compiler (gfortran) which is NOT available
+# on Windows natively. Three options:
+#   Option A (Recommended): Install BoltzTraP2 inside WSL2 Ubuntu:
+#       sudo apt install gfortran python3-pip
+#       pip install BoltzTraP2
+#   Option B: Install MSYS2 + mingw-w64-gfortran on Windows, then pip install
+#   Option C: Skip for now. BoltzTraP2 is only needed in Stage 6 (DFT validation)
+#       which runs in WSL2 anyway. All other stages work without it.
+
+# --- LLM & RAG ---
+ollama
+chromadb
+sentence-transformers
+
+# --- Knowledge Extraction ---
+requests
+beautifulsoup4
+pdfplumber
+
+# --- Database ---
+sqlalchemy
+
+# --- Visualization ---
+py3Dmol
+plotly
+streamlit
+
+# --- Utilities ---
+pyyaml
+tqdm
+loguru
+pydantic

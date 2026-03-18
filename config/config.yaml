@@ -1,0 +1,74 @@
+# =============================================================================
+# MXDiscovery - Configuration
+# =============================================================================
+
+project:
+  name: "MXDiscovery"
+  version: "0.1.0"
+  base_dir: "D:/MXDiscovery"
+  log_level: "INFO"
+
+llm:
+  provider: "ollama"
+  model: "qwen2.5:14b"
+  embedding_model: "nomic-embed-text"
+  temperature: 0.1
+  context_window: 32768
+  base_url: "http://localhost:11434"
+
+database:
+  path: "data/database/mxene_knowledge.db"
+  vector_db_path: "data/database/chromadb"
+
+semantic_scholar:
+  base_url: "https://api.semanticscholar.org/graph/v1"
+  rate_limit_per_second: 3
+  max_papers: 2000
+  search_queries:
+    - "MXene thermoelectric"
+    - "MXene Seebeck coefficient"
+    - "Ti3C2 thermoelectric"
+    - "MXene wearable energy harvesting"
+    - "MXene PEDOT thermoelectric"
+    - "2D carbide thermoelectric"
+    - "MXene thermal conductivity"
+    - "MXene electrical conductivity composite"
+    - "MXene polymer thermoelectric"
+    - "transition metal carbide thermoelectric"
+
+materials:
+  m_elements: ["Ti", "V", "Nb", "Mo", "Cr", "Zr", "Hf", "Ta", "W", "Sc"]
+  x_elements: ["C", "N"]
+  terminations: ["O", "OH", "F", "Cl", "S", "Se", "Te", "Br"]
+  stoichiometries:
+    - {formula: "M2X", n: 1}
+    - {formula: "M3X2", n: 2}
+    - {formula: "M4X3", n: 3}
+
+  te_composite_partners:
+    conducting_polymers: ["PEDOT:PSS", "PANI", "PPy", "P3HT", "PVDF"]
+    carbon_materials: ["SWCNT", "MWCNT", "rGO", "graphene", "C60"]
+    chalcogenides: ["Bi2Te3", "SnSe", "Sb2Te3", "MoS2", "WS2", "SnS2"]
+    oxides: ["ZnO", "TiO2", "SrTiO3", "In2O3"]
+    metals: ["Ag_NW", "Cu_NW", "Te_NW"]
+
+screening:
+  ml_potential: "chgnet"
+  energy_cutoff_ev_per_atom: 0.2
+  force_tolerance: 0.05
+  max_relaxation_steps: 500
+  target_temperature_K: 310
+  min_seebeck_uV_per_K: 50
+  max_thermal_conductivity: 2.0
+  min_power_factor: 10
+
+dft:
+  qe_path: ""
+  pseudopotential_dir: "data/pseudopotentials"
+  ecutwfc: 60
+  ecutrho: 480
+  kpoints: [8, 8, 1]
+  vacuum_angstrom: 20
+  smearing: "mp"
+  degauss: 0.02
+  conv_thr: 1.0e-8

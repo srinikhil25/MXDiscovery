@@ -1,0 +1,92 @@
+############################################################
+# General
+############################################################
+.DS_Store
+Thumbs.db
+*.log
+*.tmp
+*.temp
+*.swp
+*.swo
+*.bak
+*.orig
+*.retry
+
+node_modules/
+dist/
+build/
+out/
+coverage/
+.nyc_output/
+
+############################################################
+# Environment / secrets
+############################################################
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+############################################################
+# OS / tooling
+############################################################
+.vscode/
+.idea/
+*.code-workspace
+
+*.iml
+
+############################################################
+# Python
+############################################################
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.tox/
+.venv/
+venv/
+
+############################################################
+# Java / JVM
+############################################################
+*.class
+.classpath
+.project
+.settings/
+.gradle/
+build/
+target/
+
+############################################################
+# Logs and reports
+############################################################
+logs/
+*.log.*
+report.xml
+reports/
+
+############################################################
+# MXDiscovery - Data (too large for git)
+############################################################
+data/papers/*.jsonl
+data/papers/*.csv
+data/structures/*.cif
+data/structures/*POSCAR*
+data/structures/relaxed/
+data/results/
+data/database/*.db
+data/database/chromadb/
+data/database/*.json
+data/pseudopotentials/*.UPF
+
+# Keep directory structure
+!data/**/.gitkeep
+
+# Generated doc script (keep the .docx output)
+docs/generate_doc.js
+
