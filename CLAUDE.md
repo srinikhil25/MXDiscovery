@@ -90,13 +90,16 @@ Entry:    pipeline.py          → Main orchestrator connecting all stages
 - [x] Dependencies installed (PyTorch CUDA + requirements.txt)
 - [x] Toxicity screener tested and working
 - [x] Implementation guide document generated
-- [ ] Ollama installed and qwen2.5:14b pulled
+- [x] Ollama installed and qwen2.5:7b pulled (7b not 14b — 14b crashes on 8GB RAM)
+- [x] LLM tested and working (JSON extraction confirmed)
+- [x] GitHub repo created and committed
+- [x] README.md written (explanatory, no personal goals, no usage instructions)
+- [x] MIT License selected
 - [ ] Stage 1a: Paper fetching (run paper_fetcher)
 - [ ] Stage 1b: LLM data extraction
 - [ ] Stage 2: Gap analysis on real data
 - [ ] Stage 3-5: ML screening pipeline
 - [ ] Stage 6: DFT validation
-- [ ] GitHub repo created
 - [ ] Collaboration emails sent
 - [ ] Paper 1 draft (Digital Discovery)
 - [ ] Paper 2 draft (npj Computational Materials)
