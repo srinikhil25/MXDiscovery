@@ -90,3 +90,4 @@ data/pseudopotentials/*.UPF
 # Generated doc script (keep the .docx output)
 docs/generate_doc.js
 
+data/
