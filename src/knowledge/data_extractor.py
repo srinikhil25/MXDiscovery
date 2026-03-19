@@ -90,6 +90,61 @@ class ExtractedRecord(BaseModel):
     application: Optional[str] = None
     confidence: str = "low"
 
+    @field_validator("mxene_m_elements", mode="before")
+    @classmethod
+    def coerce_m_elements(cls, v):
+        """LLM sometimes returns null instead of []. Coerce to empty list."""
+        if v is None:
+            return []
+        if isinstance(v, str):
+            return [v]
+        return v
+
+    @field_validator("composite_partner", "composite_type", "synthesis_method",
+                     "application", mode="before")
+    @classmethod
+    def coerce_string(cls, v):
+        """LLM sometimes returns lists for string fields. Join with comma."""
+        if v is None:
+            return None
+        if isinstance(v, list):
+            return ", ".join(str(x) for x in v) if v else None
+        return str(v)
+
+    @field_validator("seebeck_coefficient", "electrical_conductivity",
+                     "thermal_conductivity", "power_factor", "zt_value",
+                     "temperature_k", mode="before")
+    @classmethod
+    def coerce_numeric(cls, v):
+        """
+        Handle common LLM quirks in numeric fields:
+        - List of values -> take first value (LLM sometimes returns ranges)
+        - String numbers -> convert to float
+        - Empty string -> None
+        """
+        if v is None:
+            return None
+        if isinstance(v, list):
+            return float(v[0]) if v else None
+        if isinstance(v, dict):
+            # LLM sometimes returns {'in_plane': 28.8, 'cross_plane': 0.27}
+            # Take the first numeric value
+            for val in v.values():
+                try:
+                    return float(val)
+                except (TypeError, ValueError):
+                    continue
+            return None
+        if isinstance(v, str):
+            v = v.strip()
+            if not v or v.lower() == "null":
+                return None
+            try:
+                return float(v)
+            except ValueError:
+                return None
+        return v
+
     @field_validator("zt_value")
     @classmethod
     def zt_must_be_reasonable(cls, v):
@@ -109,7 +164,7 @@ class ExtractedRecord(BaseModel):
 # ---------------------------------------------------------------------------
 # Extraction prompt template
 # ---------------------------------------------------------------------------
-EXTRACTION_PROMPT = """You are a materials science data extraction expert.
+EXTRACTION_PROMPT_TEMPLATE = """You are a materials science data extraction expert.
 Extract structured thermoelectric property data from this paper abstract.
 
 RULES:
@@ -117,36 +172,20 @@ RULES:
 - If a value is not mentioned, set it to null.
 - For MXene composition, use standard notation (e.g., Ti3C2Tx, Mo2TiC2Tx).
 - Convert all units to standard:
-  * Seebeck coefficient: µV/K
+  * Seebeck coefficient: uV/K
   * Electrical conductivity: S/cm
   * Thermal conductivity: W/mK
-  * Power factor: µW/cm·K²
+  * Power factor: uW/cm K2
 - Rate your confidence: "high" if values are explicitly stated with units,
   "medium" if stated but units unclear, "low" if interpretation was needed.
 
 EXAMPLE INPUT:
 "We fabricated Ti3C2Tx/PEDOT:PSS composite films with a Seebeck coefficient
-of 57.3 µV/K and electrical conductivity of 1500 S/cm at room temperature,
-yielding a power factor of 155.4 µW/cm·K²."
+of 57.3 uV/K and electrical conductivity of 1500 S/cm at room temperature,
+yielding a power factor of 155.4 uW/cm K2."
 
 EXAMPLE OUTPUT:
-{
-  "mxene_composition": "Ti3C2Tx",
-  "mxene_m_elements": ["Ti"],
-  "mxene_x_element": "C",
-  "termination": "Tx",
-  "composite_partner": "PEDOT:PSS",
-  "composite_type": "polymer",
-  "seebeck_coefficient": 57.3,
-  "electrical_conductivity": 1500,
-  "thermal_conductivity": null,
-  "power_factor": 155.4,
-  "zt_value": null,
-  "temperature_k": 300,
-  "synthesis_method": "film fabrication",
-  "application": "thermoelectric",
-  "confidence": "high"
-}
+{{"mxene_composition": "Ti3C2Tx", "mxene_m_elements": ["Ti"], "mxene_x_element": "C", "termination": "Tx", "composite_partner": "PEDOT:PSS", "composite_type": "polymer", "seebeck_coefficient": 57.3, "electrical_conductivity": 1500, "thermal_conductivity": null, "power_factor": 155.4, "zt_value": null, "temperature_k": 300, "synthesis_method": "film fabrication", "application": "thermoelectric", "confidence": "high"}}
 
 NOW EXTRACT FROM THIS ABSTRACT:
 Title: {title}
@@ -179,7 +218,7 @@ class DataExtractor:
 
     def __init__(
         self,
-        model: str = "qwen2.5:14b",
+        model: str = "qwen2.5:7b",
         output_dir: str | Path = "data/papers",
         checkpoint_every: int = 10,
     ):
@@ -250,7 +289,7 @@ class DataExtractor:
             logger.debug(f"No abstract for {paper_id}, skipping")
             return None
 
-        prompt = EXTRACTION_PROMPT.format(title=title, abstract=abstract)
+        prompt = EXTRACTION_PROMPT_TEMPLATE.format(title=title, abstract=abstract)
         raw_response = self._call_llm(prompt)
 
         if not raw_response:
@@ -347,3 +386,96 @@ class DataExtractor:
             "unique_partners": len(partners),
             "high_confidence": sum(1 for r in self.records if r.confidence == "high"),
         }
+
+
+# ---------------------------------------------------------------------------
+# Pre-filter: Only send TE-relevant papers to the LLM (saves processing time)
+# ---------------------------------------------------------------------------
+TE_KEYWORDS = [
+    "thermoelectric", "seebeck", "power factor", "figure of merit",
+    "thermal conductivity", "electrical conductivity", "peltier",
+    "zte", "zt ", " zt=", "zt value", "thermovoltage", "thermopower",
+    "energy harvesting", "energy harvest",
+]
+
+MXENE_KEYWORDS = [
+    "mxene", "ti3c2", "ti2c", "mo2c", "v2c", "nb2c", "cr2c",
+    "mo2ti", "ti3cn", "nb4c3", "ta4c3", "v4c3", "m2x", "m3x2", "m4x3",
+    "max phase", "transition metal carbide", "transition metal nitride",
+    "2d carbide", "2d nitride",
+]
+
+
+def is_te_relevant(paper: dict) -> bool:
+    """
+    Fast keyword check to decide if a paper is worth LLM extraction.
+
+    WHY PRE-FILTER:
+        Our 2000 papers came from broad searches. Many are about MXenes
+        but not thermoelectrics (e.g., MXene for batteries, supercapacitors).
+        LLM extraction takes ~5 seconds per paper. Processing all 1417
+        with abstracts would take ~2 hours. Pre-filtering to ~200 TE-relevant
+        papers reduces this to ~17 minutes.
+
+    ALGORITHM:
+        A paper is TE-relevant if its abstract contains:
+        - At least one MXene keyword AND at least one TE keyword
+        - OR it mentions specific TE property values (numbers + units)
+    """
+    abstract = (paper.get("abstract") or "").lower()
+    title = (paper.get("title") or "").lower()
+    text = title + " " + abstract
+
+    has_mxene = any(kw in text for kw in MXENE_KEYWORDS)
+    has_te = any(kw in text for kw in TE_KEYWORDS)
+
+    return has_mxene and has_te
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    import yaml
+    import time
+
+    config_path = Path(__file__).parent.parent.parent / "config" / "config.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+
+    base_dir = Path(config["project"]["base_dir"])
+    papers_dir = base_dir / "data" / "papers"
+
+    # Load papers
+    papers_jsonl = papers_dir / "papers.jsonl"
+    if not papers_jsonl.exists():
+        logger.error(f"No papers found at {papers_jsonl}. Run paper fetcher first.")
+        exit(1)
+
+    all_papers = []
+    with open(papers_jsonl, "r", encoding="utf-8") as f:
+        for line in f:
+            if line.strip():
+                all_papers.append(json.loads(line.strip()))
+
+    # Pre-filter to TE-relevant papers only
+    te_papers = [p for p in all_papers if is_te_relevant(p)]
+    logger.info(f"Loaded {len(all_papers)} papers, {len(te_papers)} are TE-relevant")
+
+    # Initialize extractor
+    extractor = DataExtractor(
+        model=config["llm"]["model"],
+        output_dir=papers_dir,
+        checkpoint_every=10,
+    )
+
+    # Run extraction
+    start = time.time()
+    records = extractor.extract_batch(te_papers)
+    elapsed = time.time() - start
+
+    # Print stats
+    stats = extractor.get_stats()
+    print(f"\n--- LLM Extraction Complete ({elapsed:.1f}s) ---")
+    for k, v in stats.items():
+        print(f"  {k}: {v}")

@@ -23,8 +23,8 @@ database:
 
 semantic_scholar:
   base_url: "https://api.semanticscholar.org/graph/v1"
-  rate_limit_per_second: 3
-  max_papers: 2000
+  rate_limit_per_second: 0.3    # 1 request per 3 seconds (conservative to avoid 429s)
+  max_papers: 200               # MXene TE is a small field; 200 per query is plenty
   search_queries:
     - "MXene thermoelectric"
     - "MXene Seebeck coefficient"

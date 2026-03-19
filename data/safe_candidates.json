@@ -1,0 +1,342 @@
+[
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "PEDOT:PSS",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.8707692307692307,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 1.0,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Ti2C",
+    "m_elements": [
+      "Ti"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "PEDOT:PSS",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7946153846153846,
+    "novelty_score": 0.41538461538461535,
+    "analogy_score": 1.0,
+    "synthesizability": 0.9,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo3C2",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M3X2",
+    "termination": "O",
+    "composite_partner": "PEDOT:PSS",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7807692307692308,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 1.0,
+    "synthesizability": 0.3,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo4C3",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M4X3",
+    "termination": "O",
+    "composite_partner": "PEDOT:PSS",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7807692307692308,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 1.0,
+    "synthesizability": 0.3,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo2N",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "N",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "PEDOT:PSS",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7807692307692308,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 1.0,
+    "synthesizability": 0.3,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo3N2",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "N",
+    "stoichiometry": "M3X2",
+    "termination": "O",
+    "composite_partner": "PEDOT:PSS",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7807692307692308,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 1.0,
+    "synthesizability": 0.3,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo4N3",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "N",
+    "stoichiometry": "M4X3",
+    "termination": "O",
+    "composite_partner": "PEDOT:PSS",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7807692307692308,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 1.0,
+    "synthesizability": 0.3,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "SWCNT",
+    "partner_type": "carbon_materials",
+    "overall_score": 0.78,
+    "novelty_score": 1.0,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "MWCNT",
+    "partner_type": "carbon_materials",
+    "overall_score": 0.78,
+    "novelty_score": 1.0,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "rGO",
+    "partner_type": "carbon_materials",
+    "overall_score": 0.78,
+    "novelty_score": 1.0,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "graphene",
+    "partner_type": "carbon_materials",
+    "overall_score": 0.78,
+    "novelty_score": 1.0,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "C60",
+    "partner_type": "carbon_materials",
+    "overall_score": 0.78,
+    "novelty_score": 1.0,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "Ag_NW",
+    "partner_type": "metals",
+    "overall_score": 0.78,
+    "novelty_score": 1.0,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "Cu_NW",
+    "partner_type": "metals",
+    "overall_score": 0.78,
+    "novelty_score": 1.0,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.65,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "MoS2",
+    "partner_type": "chalcogenides",
+    "overall_score": 0.7753846153846153,
+    "novelty_score": 0.9846153846153847,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "SnS2",
+    "partner_type": "chalcogenides",
+    "overall_score": 0.7753846153846153,
+    "novelty_score": 0.9846153846153847,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "PANI",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7707692307692309,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "PPy",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7707692307692309,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.7,
+    "toxicity_class": "SAFE"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "P3HT",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7707692307692309,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.55,
+    "toxicity_class": "CAUTION"
+  },
+  {
+    "mxene_formula": "Mo2C",
+    "m_elements": [
+      "Mo"
+    ],
+    "x_element": "C",
+    "stoichiometry": "M2X",
+    "termination": "O",
+    "composite_partner": "PVDF",
+    "partner_type": "conducting_polymers",
+    "overall_score": 0.7707692307692309,
+    "novelty_score": 0.9692307692307692,
+    "analogy_score": 0.75,
+    "synthesizability": 0.6,
+    "toxicity_score": 0.5,
+    "toxicity_class": "CAUTION"
+  }
+]

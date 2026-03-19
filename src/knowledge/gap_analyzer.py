@@ -348,3 +348,47 @@ class GapAnalyzer:
             print(f"  Underexplored partners (< 3 MXenes tested):")
             print(f"    {', '.join(result.underexplored_partners[:10])}")
         print("=" * 70)
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    import json
+    import yaml
+    from pathlib import Path
+
+    config_path = Path(__file__).parent.parent.parent / "config" / "config.yaml"
+    with open(config_path) as f:
+        config = yaml.safe_load(f)
+
+    base_dir = Path(config["project"]["base_dir"])
+    db_path = base_dir / config["database"]["path"]
+
+    db = MXeneDatabase(db_path)
+    analyzer = GapAnalyzer(db, config)
+    result = analyzer.analyze(top_n=50)
+    analyzer.print_report(result)
+
+    # Save top candidates to JSON for Stage 3 (structure generation)
+    candidates_path = base_dir / "data" / "gap_analysis_candidates.json"
+    candidates_data = []
+    for c in result.top_candidates:
+        candidates_data.append({
+            "mxene_formula": c.mxene_formula,
+            "m_elements": c.m_elements,
+            "x_element": c.x_element,
+            "stoichiometry": c.stoichiometry,
+            "termination": c.termination,
+            "composite_partner": c.composite_partner,
+            "partner_type": c.partner_type,
+            "overall_score": c.overall_score,
+            "novelty_score": c.novelty_score,
+            "analogy_score": c.analogy_score,
+            "synthesizability": c.synthesizability,
+        })
+    with open(candidates_path, "w") as f:
+        json.dump(candidates_data, f, indent=2)
+    print(f"\nSaved {len(candidates_data)} candidates to {candidates_path}")
+
+    db.close()

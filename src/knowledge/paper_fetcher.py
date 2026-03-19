@@ -72,9 +72,12 @@ class PaperFetcher:
     BASE_URL = "https://api.semanticscholar.org/graph/v1"
 
     # Fields we request from the API (controls what metadata comes back)
+    # NOTE: 'doi' and 'url' are no longer standalone fields.
+    #   DOI is inside 'externalIds' (e.g., externalIds.DOI)
+    #   Paper URL can be constructed from paperId.
     PAPER_FIELDS = (
-        "title,abstract,year,authors,doi,venue,citationCount,"
-        "referenceCount,openAccessPdf,tldr,fieldsOfStudy,url"
+        "title,abstract,year,authors,externalIds,venue,citationCount,"
+        "referenceCount,openAccessPdf,tldr,fieldsOfStudy"
     )
 
     def __init__(
@@ -82,10 +85,21 @@ class PaperFetcher:
         output_dir: str | Path = "data/papers",
         rate_limit: float = 3.0,
         max_per_query: int = 500,
+        api_key: Optional[str] = None,
     ):
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
-        self.delay = 1.0 / rate_limit  # seconds between requests
+        # With API key: 1 req/sec is safe. Without: 5s minimum to avoid 429s.
+        # The free tier aggressively throttles bursts, especially with large
+        # result sets (limit=100). We use conservative delays to be safe.
+        if api_key:
+            self.delay = max(1.0, 1.0 / rate_limit)
+            self.page_size = 100  # Full page size with API key
+        else:
+            self.delay = 5.0  # 5 seconds between requests for free tier
+            self.page_size = 20  # Smaller pages = less data per request = fewer 429s
+        self.api_key = api_key
+        self.headers = {"x-api-key": api_key} if api_key else {}
         self.max_per_query = max_per_query
         self.seen_ids: set[str] = set()
         self.papers: list[Paper] = []
@@ -118,7 +132,7 @@ class PaperFetcher:
         for attempt in range(max_retries):
             time.sleep(self.delay)  # Rate limiting
             try:
-                resp = requests.get(url, params=params, timeout=30)
+                resp = requests.get(url, params=params, headers=self.headers, timeout=30)
                 if resp.status_code == 200:
                     return resp.json()
                 elif resp.status_code == 429:
@@ -153,12 +167,21 @@ class PaperFetcher:
         pdf_url = None
         oap = raw.get("openAccessPdf")
         if oap and isinstance(oap, dict):
-            pdf_url = oap.get("url")
+            pdf_url = oap.get("url") or None  # empty string → None
 
         tldr_text = None
         tldr = raw.get("tldr")
         if tldr and isinstance(tldr, dict):
             tldr_text = tldr.get("text")
+
+        # DOI is now inside externalIds, not a top-level field
+        doi = None
+        ext_ids = raw.get("externalIds")
+        if ext_ids and isinstance(ext_ids, dict):
+            doi = ext_ids.get("DOI")
+
+        # Construct paper URL from paperId
+        paper_url = f"https://www.semanticscholar.org/paper/{paper_id}"
 
         return Paper(
             paper_id=paper_id,
@@ -166,14 +189,14 @@ class PaperFetcher:
             abstract=raw.get("abstract"),
             year=raw.get("year"),
             authors=authors,
-            doi=raw.get("doi"),
+            doi=doi,
             venue=raw.get("venue"),
             citation_count=raw.get("citationCount", 0),
             reference_count=raw.get("referenceCount", 0),
             open_access_pdf=pdf_url,
             tldr=tldr_text,
             fields_of_study=raw.get("fieldsOfStudy") or [],
-            url=raw.get("url"),
+            url=paper_url,
         )
 
     def search(self, query: str) -> list[Paper]:
@@ -181,9 +204,9 @@ class PaperFetcher:
         Search for papers matching a query string.
 
         ALGORITHM:
-            1. Send search query with offset=0, limit=100
+            1. Send search query with offset=0, limit=page_size (20 free / 100 with key)
             2. Parse each result into Paper, skip duplicates
-            3. Increment offset by 100, repeat until:
+            3. Increment offset by page_size, repeat until:
                - No more results (total exhausted)
                - Reached max_per_query limit
             4. Return list of new (non-duplicate) papers
@@ -192,12 +215,12 @@ class PaperFetcher:
             Semantic Scholar returns {total, offset, data[]} where:
             - total = total matching papers
             - offset = current position
-            - data = list of paper objects (max 100 per page)
+            - data = list of paper objects (max 100 per page, we use 20 on free tier)
         """
         logger.info(f"Searching: '{query}'")
         new_papers = []
         offset = 0
-        limit = 100  # API max per page
+        limit = self.page_size  # 100 with API key, 20 without (free tier safe)
 
         while offset < self.max_per_query:
             url = f"{self.BASE_URL}/paper/search"
@@ -249,6 +272,9 @@ class PaperFetcher:
             new = self.search(query)
             all_new.extend(new)
             logger.info(f"  Total unique papers so far: {len(self.papers)}")
+            # Wait between queries to avoid rate limiting across searches
+            if i < len(queries) - 1:
+                time.sleep(5)
 
         self._save()
         logger.info(f"Fetching complete. Total: {len(self.papers)}, New: {len(all_new)}")
@@ -310,10 +336,18 @@ if __name__ == "__main__":
     with open(config_path) as f:
         config = yaml.safe_load(f)
 
+    # API key is optional - if present, we get higher rate limits (1 req/sec)
+    api_key = config["semantic_scholar"].get("api_key")
+    if api_key:
+        logger.info("Using Semantic Scholar API key (1 req/sec rate limit)")
+    else:
+        logger.info("No API key - using free tier (5s delay, 20 results/page)")
+
     fetcher = PaperFetcher(
         output_dir=Path(config["project"]["base_dir"]) / "data" / "papers",
         rate_limit=config["semantic_scholar"]["rate_limit_per_second"],
         max_per_query=config["semantic_scholar"]["max_papers"],
+        api_key=api_key,
     )
 
     papers = fetcher.fetch_all(config["semantic_scholar"]["search_queries"])

@@ -620,3 +620,45 @@ class ToxicityScreener:
         print(f"  SAFE composite partners:")
         print(f"    {', '.join(self.get_safe_partners())}")
         print("=" * 80)
+
+
+# ---------------------------------------------------------------------------
+# CLI entry point
+# ---------------------------------------------------------------------------
+if __name__ == "__main__":
+    import json
+    from pathlib import Path
+
+    candidates_path = Path("D:/MXDiscovery/data/gap_analysis_candidates.json")
+    if not candidates_path.exists():
+        logger.error("Run gap_analyzer first to generate candidates")
+        exit(1)
+
+    with open(candidates_path) as f:
+        candidates = json.load(f)
+
+    screener = ToxicityScreener()
+    assessments = screener.screen_batch(candidates)
+    screener.print_report(assessments)
+
+    # Filter to safe candidates and save
+    safe = [a for a in assessments if a.is_wearable_safe]
+    safe_candidates = []
+    for a in safe:
+        # Find the matching candidate dict
+        for c in candidates:
+            if (c["mxene_formula"] in a.candidate_name and
+                c["termination"] in a.candidate_name and
+                c.get("composite_partner", "") in a.candidate_name):
+                safe_candidates.append({
+                    **c,
+                    "toxicity_score": a.overall_score,
+                    "toxicity_class": a.classification,
+                })
+                break
+
+    safe_path = Path("D:/MXDiscovery/data/safe_candidates.json")
+    with open(safe_path, "w") as f:
+        json.dump(safe_candidates, f, indent=2)
+
+    print(f"\n  Saved {len(safe_candidates)} safe candidates to {safe_path}")
