@@ -62,9 +62,37 @@ Entry:    pipeline.py          → Main orchestrator connecting all stages
 
 1. **Composition-space gap analysis** for MXene thermoelectrics — systematic identification of unexplored regions
 2. **Toxicity-constrained screening** — biocompatibility filter integrated into computational discovery (new for any 2D material)
-3. **CHGNet/MACE benchmark for MXene interfaces** — first reported accuracy data
+3. **CHGNet/MACE benchmark for MXene interfaces** — first reported accuracy data (ZERO prior papers)
 4. **Body-temperature TE screening at 310K** — most TE screening targets >500K
 5. **Fully open-source, consumer GPU** — democratized materials discovery
+6. **TOPSIS for computational discovery** — never used in materials screening pipelines before
+7. **LLM extraction with local 7B model** — prior work used GPT-4 cloud; nobody used local open-source LLM
+
+## Publication Strategy (11 Possible Papers)
+
+Priority order for PhD admission + lab reputation:
+
+| # | Paper | Target Journal | Type | Timeline |
+|---|-------|---------------|------|----------|
+| 1 | CHGNet/MACE benchmark on MXenes | npj Computational Materials | Benchmark | Month 2-3 |
+| 2 | MXDiscovery pipeline paper | Digital Discovery (RSC) | Methodology | Month 3-5 |
+| 3 | MXeneTE structured database | Scientific Data (Nature) | Data resource | Month 4-5 |
+| 4 | ML-predicted stable MXene TE composites | npj Computational Materials | Discovery | Month 5-7 |
+| 5 | Experimental validation of predictions | Nature Communications | Discovery+Exp | Month 6-9 |
+| 6 | Materials informatics for 2D materials review | Materials Today | Review | Month 7-8 |
+| 7 | Composition-space gap analysis framework | Chemistry of Materials | Methodology | Split from #2 |
+| 8 | Toxicity-constrained materials screening | Matter / ACS Sustainable Chem | Methodology | Split from #2 |
+| 9 | LLM extraction accuracy evaluation | J. Chem. Inf. Model. | Benchmark | Split from #2 |
+| 10 | Democratized discovery on consumer GPU | Digital Discovery | Perspective | Anytime |
+| 11 | Materials informatics curriculum | J. Materials Education | Education | Anytime |
+
+Key literature gaps confirmed by web search (March 2026):
+- CHGNet/MACE on MXenes: **ZERO papers** exist
+- Composition-space gap analysis for MXenes: **ZERO papers**
+- Toxicity in computational materials discovery: **ONE paper** (MOFs only, Matter Jan 2025)
+- TOPSIS in computational screening: **ZERO papers** (only used for commercial material selection)
+- Local LLM for materials extraction: **ZERO papers** (all use GPT-4 cloud)
+- Full pipeline on consumer GPU: **ZERO papers**
 
 ## Documentation Requirements
 
@@ -95,14 +123,29 @@ Entry:    pipeline.py          → Main orchestrator connecting all stages
 - [x] GitHub repo created and committed
 - [x] README.md written (explanatory, no personal goals, no usage instructions)
 - [x] MIT License selected
-- [ ] Stage 1a: Paper fetching (run paper_fetcher)
-- [ ] Stage 1b: LLM data extraction
-- [ ] Stage 2: Gap analysis on real data
-- [ ] Stage 3-5: ML screening pipeline
-- [ ] Stage 6: DFT validation
+- [x] Stage 1a: Paper fetching — 2000 papers from OpenAlex (Semantic Scholar IP-blocked; OpenAlex fallback works perfectly)
+- [x] Stage 1b: LLM extraction — 123/123 TE-relevant papers extracted (18 compositions, 42 partners)
+- [x] Stage 1→DB: Loaded into SQLite (papers + te_records tables)
+- [x] Stage 2: Gap analysis — 11,040 theoretical space, only 26 explored (0.2%), 50 top candidates identified
+- [x] Toxicity screening — 20 safe candidates for wearable use (Mo2C, Ti2C, Mo-nitrides with various partners)
+- [x] Stage 3: Structure generation — 20 POSCAR files generated (ASE, all stoichiometries)
+- [x] Stage 4: CHGNet stability screening — ALL 20 candidates thermodynamically stable (23.7s on GPU)
+  - Ti2CO2: E_f = -1.749 eV/atom (most stable)
+  - Mo2NO2: E_f = -0.906 eV/atom
+  - Mo2CO2: E_f = -0.572 eV/atom
+- [ ] Stage 5: TE property prediction (Goldsmid-Sharp, ALIGNN, TOPSIS ranking)
+- [ ] Stage 6: DFT validation (Quantum ESPRESSO via WSL2)
 - [ ] Collaboration emails sent
 - [ ] Paper 1 draft (Digital Discovery)
 - [ ] Paper 2 draft (npj Computational Materials)
+
+## Key Discovery Results
+
+- **Mo2CTx** is the most underexplored MXene for thermoelectrics — appears in 0 published TE studies
+- **Ti2CTx** with any composite partner has NO published TE data (despite Ti2C being easy to synthesize)
+- **Mo-nitrides (Mo2N, Mo3N2)** are extremely stable but completely unstudied for TE
+- Best partner categories: conducting polymers (PEDOT:PSS) and carbon materials (SWCNT, rGO, graphene)
+- Safe M-elements confirmed: Ti, Zr, Nb, Ta, Hf, Sc, Mo (V and Cr excluded by toxicity screener)
 
 ## Rules
 
