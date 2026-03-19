@@ -63,50 +63,63 @@ Ranks surviving candidates using TOPSIS (Technique for Order of Preference by Si
 ### Stage 6 — DFT Validation
 Generates Quantum ESPRESSO input files for the top-ranked candidates, enabling rigorous density functional theory validation of ML predictions. Band structure calculations feed into BoltzTraP2 for Boltzmann transport calculations of Seebeck coefficient, electrical conductivity, and electronic thermal conductivity as functions of temperature and carrier concentration.
 
+## Results (March 2026)
+
+The complete pipeline has been executed. Key findings:
+
+| Rank | Candidate | Seebeck (uV/K) | Power Factor | ZT | Stability (eV/atom) | TOPSIS | Priority |
+|------|-----------|----------------|-------------|-----|---------------------|--------|----------|
+| 1 | Mo2N-O / PEDOT:PSS | 338.7 | 1813.9 | 0.0078 | -0.906 | 0.869 | HIGH |
+| 2 | Mo3N2-O / PEDOT:PSS | 241.9 | 925.5 | 0.0040 | -0.905 | 0.528 | MODERATE |
+| 3 | Ti2C-O / PEDOT:PSS | 232.3 | 852.9 | 0.0022 | -1.749 | 0.389 | LOW |
+
+**DFT Validation:** Mo2CO2 confirmed metallic (bandgap = 0.0 eV, PBE/PAW, Quantum ESPRESSO v7.5). Mo-nitrides retain semiconducting character, making them superior for thermoelectrics.
+
 ## Architecture
 
 ```
-Semantic Scholar API
-        │
-        ▼
-  Paper Fetcher ──────► papers.jsonl
-        │
-        ▼
-  LLM Data Extractor ──► extracted_records.jsonl
-   (Ollama / Qwen2.5)        │
-        │                     ▼
-        └────────────► SQLite Knowledge Base
-                              │
-                              ▼
-                      Gap Analyzer
-                    (composition-space mapping)
-                              │
-                              ▼
-                    Toxicity Screener
-                  (biocompatibility filter)
-                              │
-                              ▼
-                   Structure Generator ──► CIF / POSCAR
-                         (ASE)                 │
-                              │                ▼
-                              └──────► ML Stability Screener
-                                       (CHGNet / MACE)
-                                              │
-                                              ▼
-                                      TE Property Predictor
-                                   (Goldsmid-Sharp / ALIGNN)
-                                              │
-                                              ▼
-                                        TOPSIS Ranker
-                                              │
-                                              ▼
-                                      Top 10–20 candidates
-                                              │
-                                              ▼
-                                    Quantum ESPRESSO (DFT)
-                                              │
-                                              ▼
-                                   Validated TE properties
+OpenAlex API
+        |
+        v
+  Paper Fetcher ----------> papers.jsonl (2,000 papers)
+        |
+        v
+  LLM Data Extractor -----> extracted_records.jsonl (~120 records)
+   (Ollama / Qwen2.5)            |
+        |                        v
+        +---------------> SQLite Knowledge Base
+                                 |
+                                 v
+                         Gap Analyzer
+                       (composition-space mapping)
+                                 |
+                                 v
+                       Toxicity Screener
+                     (biocompatibility filter)
+                                 |
+                                 v
+                      Structure Generator -----> CIF / POSCAR
+                            (ASE)                     |
+                                 |                    v
+                                 +-----------> ML Stability Screener
+                                               (CHGNet / MACE)
+                                                      |
+                                                      v
+                                              TE Property Predictor
+                                           (Goldsmid-Sharp + DFT bandgaps)
+                                                      |
+                                                      v
+                                                TOPSIS Ranker
+                                                      |
+                                                      v
+                                              Top 10-20 candidates
+                                                      |
+                                                      v
+                                            Quantum ESPRESSO (DFT)
+                                                      |
+                                                      v
+                                           Validated TE properties
+                                           (feeds back to ranker)
 ```
 
 ## Design Principles

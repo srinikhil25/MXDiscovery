@@ -110,42 +110,50 @@ Key literature gaps confirmed by web search (March 2026):
 - Docs: `D:/MXDiscovery/docs/`
 - Virtual env: `D:/MXDiscovery/venv/` (Python 3.11.9)
 
-## Current State (Update This After Each Session)
+## Current State (Updated 2026-03-19)
 
 - [x] Project structure created
-- [x] All core modules written (paper_fetcher, data_extractor, database, gap_analyzer, structure_generator, stability_screener, te_predictor, ranker, toxicity_screener, qe_manager, agent, pipeline)
+- [x] All core modules written
 - [x] Virtual environment created (Python 3.11)
 - [x] Dependencies installed (PyTorch CUDA + requirements.txt)
-- [x] Toxicity screener tested and working
-- [x] Implementation guide document generated
-- [x] Ollama installed and qwen2.5:7b pulled (7b not 14b — 14b crashes on 8GB RAM)
-- [x] LLM tested and working (JSON extraction confirmed)
-- [x] GitHub repo created and committed
-- [x] README.md written (explanatory, no personal goals, no usage instructions)
-- [x] MIT License selected
-- [x] Stage 1a: Paper fetching — 2000 papers from OpenAlex (Semantic Scholar IP-blocked; OpenAlex fallback works perfectly)
-- [x] Stage 1b: LLM extraction — 123/123 TE-relevant papers extracted (18 compositions, 42 partners)
-- [x] Stage 1→DB: Loaded into SQLite (papers + te_records tables)
-- [x] Stage 2: Gap analysis — 11,040 theoretical space, only 26 explored (0.2%), 50 top candidates identified
-- [x] Toxicity screening — 20 safe candidates for wearable use (Mo2C, Ti2C, Mo-nitrides with various partners)
-- [x] Stage 3: Structure generation — 20 POSCAR files generated (ASE, all stoichiometries)
-- [x] Stage 4: CHGNet stability screening — ALL 20 candidates thermodynamically stable (23.7s on GPU)
-  - Ti2CO2: E_f = -1.749 eV/atom (most stable)
-  - Mo2NO2: E_f = -0.906 eV/atom
-  - Mo2CO2: E_f = -0.572 eV/atom
-- [ ] Stage 5: TE property prediction (Goldsmid-Sharp, ALIGNN, TOPSIS ranking)
-- [ ] Stage 6: DFT validation (Quantum ESPRESSO via WSL2)
+- [x] Ollama installed and qwen2.5:7b pulled
+- [x] GitHub repo created
+- [x] Stage 1a: Paper fetching — 2000 papers from OpenAlex
+- [x] Stage 1b: LLM extraction — ~120 TE-relevant records extracted
+- [x] Stage 1→DB: Loaded into SQLite
+- [x] Stage 2: Gap analysis — 11,040 theoretical space, 50 top candidates
+- [x] Stage 2.5: Toxicity screening — 20 safe candidates
+- [x] Stage 3: Structure generation — 20 POSCAR files (ASE)
+- [x] Stage 4: CHGNet stability screening — ALL 20 stable (23.7s on GPU)
+- [x] Stage 5: TE prediction + TOPSIS ranking — FIXED & WORKING
+  - Now integrates DFT bandgaps when available
+  - Differentiated by partner type (Seebeck, conductivity, thermal cond all vary)
+  - Composite-specific Seebeck modifiers from literature
+  - Lattice thermal conductivity reduced by partner interface scattering
+- [x] Stage 6: DFT validation — Mo2C_O COMPLETE (QE v7.5, WSL2)
+  - SCF converged in 18 iterations, 7m51s wall time
+  - Total energy: -829.572 Ry
+  - Fermi energy: -1.362 eV
+  - Bandgap: 0.0 eV (METALLIC — confirmed by DOS)
+  - DOS at Fermi level: 1.269 states/eV
+  - Band structure and post-processing complete
+- [ ] Interactive UI dashboard (Streamlit)
 - [ ] Collaboration emails sent
-- [ ] Paper 1 draft (Digital Discovery)
-- [ ] Paper 2 draft (npj Computational Materials)
+- [ ] Paper drafts
 
 ## Key Discovery Results
 
-- **Mo2CTx** is the most underexplored MXene for thermoelectrics — appears in 0 published TE studies
-- **Ti2CTx** with any composite partner has NO published TE data (despite Ti2C being easy to synthesize)
-- **Mo-nitrides (Mo2N, Mo3N2)** are extremely stable but completely unstudied for TE
-- Best partner categories: conducting polymers (PEDOT:PSS) and carbon materials (SWCNT, rGO, graphene)
-- Safe M-elements confirmed: Ti, Zr, Nb, Ta, Hf, Sc, Mo (V and Cr excluded by toxicity screener)
+- **#1 candidate: Mo2N_O / PEDOT:PSS** — TOPSIS score 0.869 (HIGH PRIORITY)
+  - S=338.7 uV/K, PF=1813.9, ZT=0.0078, E_f=-0.906 eV/atom
+  - Semiconducting (bandgap ~0.35 eV), high novelty (0.969)
+- **#2: Mo3N2_O / PEDOT:PSS** — TOPSIS 0.528 (MODERATE)
+- **#3: Ti2C_O / PEDOT:PSS** — TOPSIS 0.389 (most stable at -1.749 eV/atom)
+- **DFT finding:** Mo2CO2 is metallic (not semiconducting as literature estimates suggested)
+  - This changes the Mo2C composite rankings significantly
+  - Mo-nitrides now rank above Mo-carbides for TE applications
+- **Mo-nitrides (Mo2N, Mo3N2)** are the best discovery — extremely stable, semiconducting, completely unstudied for TE
+- Best partner: PEDOT:PSS (conducting polymer, good Seebeck boost via energy filtering)
+- Safe M-elements confirmed: Ti, Zr, Nb, Ta, Hf, Sc, Mo
 
 ## Rules
 

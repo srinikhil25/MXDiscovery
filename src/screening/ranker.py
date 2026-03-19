@@ -55,7 +55,7 @@ class RankedCandidate:
     mxene_formula: str = ""
     termination: str = ""
     composite_partner: str = ""
-    partner_type: str = ""
+    partner_type: str = ""  # polymer, carbon, chalcogenide, etc.
 
     # Properties
     formation_energy: float = 0.0
@@ -255,14 +255,30 @@ class CandidateRanker:
 
         for cand in candidates:
             name = cand.get("name", "")
+
+            # Safely convert formation_energy to float (may be string from JSON)
+            fe_raw = cand.get("formation_energy", 0)
+            try:
+                fe = float(fe_raw) if fe_raw is not None else 0.0
+            except (TypeError, ValueError):
+                fe = 0.0
+
+            # Safely convert is_stable (may be string "True"/"False" from JSON)
+            is_stable_raw = cand.get("is_stable", False)
+            if isinstance(is_stable_raw, str):
+                is_stable = is_stable_raw.lower() == "true"
+            else:
+                is_stable = bool(is_stable_raw)
+
             record = {
                 "name": name,
                 "mxene_formula": cand.get("mxene_formula", ""),
                 "termination": cand.get("termination", ""),
                 "composite_partner": cand.get("composite_partner", ""),
-                "formation_energy": cand.get("formation_energy", 0),
-                "is_stable": cand.get("is_stable", False),
-                "stability": -(cand.get("formation_energy", 0) or 0),  # negate: more stable = higher
+                "partner_type": cand.get("partner_type", ""),
+                "formation_energy": fe,
+                "is_stable": is_stable,
+                "stability": -fe,  # negate: more negative formation energy = more stable = higher score
             }
 
             # Merge TE predictions
@@ -301,14 +317,21 @@ class CandidateRanker:
         else:
             recommendation = "LOW PRIORITY - unlikely to outperform known materials"
 
+        fe_raw = data.get("formation_energy", 0)
+        try:
+            fe = float(fe_raw) if fe_raw is not None else 0.0
+        except (TypeError, ValueError):
+            fe = 0.0
+
         return RankedCandidate(
             rank=rank,
             name=data.get("name", ""),
             mxene_formula=data.get("mxene_formula", ""),
             termination=data.get("termination", ""),
             composite_partner=data.get("composite_partner", ""),
-            formation_energy=data.get("formation_energy", 0),
-            is_stable=data.get("is_stable", False),
+            partner_type=data.get("partner_type", ""),
+            formation_energy=fe,
+            is_stable=bool(data.get("is_stable", False)),
             seebeck=data.get("seebeck"),
             conductivity=data.get("conductivity"),
             thermal_cond=data.get("thermal_cond"),

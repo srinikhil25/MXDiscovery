@@ -190,7 +190,9 @@ class QEManager:
         lines.append(f"  calculation = '{calculation}'")
         lines.append(f"  prefix = '{name}'")
         lines.append(f"  outdir = './tmp'")
-        lines.append(f"  pseudo_dir = '{self.pseudo_dir}'")
+        # Ensure forward slashes for WSL/Linux paths
+        pseudo_path = str(self.pseudo_dir).replace("\\", "/")
+        lines.append(f"  pseudo_dir = '{pseudo_path}'")
         if calculation in ("relax", "vc-relax"):
             lines.append(f"  forc_conv_thr = 1.0d-4")
         lines.append("/")
@@ -382,3 +384,350 @@ class QEManager:
                     results["wall_time"] = line.strip()
 
         return results
+
+    def generate_nscf_input(self, atoms: "Atoms", name: str, kpoints: tuple = (16, 16, 1)) -> Path:
+        """
+        Generate NSCF (non-self-consistent field) input for dense k-grid.
+
+        WHY NSCF?
+            The SCF calculation converges the charge density on a coarse k-grid
+            (e.g., 8x8x1). But for accurate DOS and transport properties, we need
+            eigenvalues on a MUCH denser k-grid (16x16x1 or more).
+
+            NSCF reads the converged charge density from SCF, then computes
+            eigenvalues at many more k-points WITHOUT re-converging the density.
+            This is much faster than doing SCF on the dense grid.
+
+        ALGORITHM:
+            1. Copy SCF input
+            2. Change calculation = 'scf' -> 'nscf'
+            3. Increase k-grid density
+            4. Add nosym = .true. (needed for BoltzTraP2 compatibility)
+            5. Increase nbnd (number of bands) for transport calculations
+
+        PARAMETERS:
+            kpoints: dense k-grid, default (16,16,1) for 2D MXenes
+                     More k-points = better DOS resolution but slower
+        """
+        calc_dir = self.output_dir / name
+        calc_dir.mkdir(parents=True, exist_ok=True)
+
+        # Read SCF input as template
+        scf_file = calc_dir / f"{name}.scf.in"
+        if not scf_file.exists():
+            # Generate SCF first
+            self.generate_scf_input(atoms, name, calculation="scf")
+
+        with open(scf_file) as f:
+            content = f.read()
+
+        # Modify for NSCF
+        nscf_content = content.replace("calculation = 'scf'", "calculation = 'nscf'")
+
+        # Add nosym and increase bands before the closing /SYSTEM
+        # nosym = .true. is needed for BoltzTraP2 to work correctly
+        nscf_content = nscf_content.replace(
+            "  degauss = 0.02\n/",
+            "  degauss = 0.02\n  nosym = .true.\n  nbnd = 40\n/"
+        )
+
+        # Replace k-grid with denser one
+        old_kline = f"  {self.kpoints[0]} {self.kpoints[1]} {self.kpoints[2]} 0 0 0"
+        new_kline = f"  {kpoints[0]} {kpoints[1]} {kpoints[2]} 0 0 0"
+        nscf_content = nscf_content.replace(old_kline, new_kline)
+
+        nscf_file = calc_dir / f"{name}.nscf.in"
+        with open(nscf_file, "w") as f:
+            f.write(nscf_content)
+
+        logger.info(f"Generated QE NSCF input: {nscf_file}")
+        return nscf_file
+
+    def generate_dos_input(self, name: str) -> Path:
+        """
+        Generate dos.x input file for density of states calculation.
+
+        WHY DOS?
+            The density of states tells us:
+            - Whether the material is metallic (DOS at Fermi level > 0) or
+              semiconducting (gap around Fermi level)
+            - The bandgap magnitude (distance between VBM and CBM)
+            - Shape of DOS near Fermi level (affects Seebeck coefficient)
+
+            For thermoelectrics: sharp DOS features near the Fermi level
+            lead to high Seebeck coefficients (Mahan-Sofo theory).
+
+        ALGORITHM:
+            dos.x reads the NSCF output and computes the DOS by:
+            1. Collecting all eigenvalues from the dense k-grid
+            2. Broadening each eigenvalue with a Gaussian/tetrahedron method
+            3. Summing contributions to get total DOS(E)
+
+        INPUT FORMAT:
+            &DOS
+                prefix = 'name'        ! must match NSCF prefix
+                outdir = './tmp'       ! must match NSCF outdir
+                fildos = 'name.dos'    ! output DOS file
+                Emin = -10.0           ! energy range (eV relative to Fermi)
+                Emax = 10.0
+                DeltaE = 0.01          ! energy resolution (eV)
+            /
+        """
+        calc_dir = self.output_dir / name
+        calc_dir.mkdir(parents=True, exist_ok=True)
+
+        lines = [
+            "&DOS",
+            f"  prefix = '{name}'",
+            f"  outdir = './tmp'",
+            f"  fildos = '{name}.dos'",
+            f"  Emin = -10.0",
+            f"  Emax = 10.0",
+            f"  DeltaE = 0.01",
+            "/",
+        ]
+
+        dos_file = calc_dir / f"{name}.dos.in"
+        with open(dos_file, "w") as f:
+            f.write("\n".join(lines) + "\n")
+
+        logger.info(f"Generated QE DOS input: {dos_file}")
+        return dos_file
+
+    def generate_bands_pp_input(self, name: str) -> Path:
+        """
+        Generate bands.x post-processing input.
+
+        WHY bands.x?
+            After pw.x bands calculation, the eigenvalues are stored in QE's
+            internal binary format. bands.x extracts them into a text file
+            that can be plotted or fed to BoltzTraP2.
+
+        INPUT FORMAT:
+            &BANDS
+                prefix = 'name'
+                outdir = './tmp'
+                filband = 'name.bands.dat'  ! output band structure file
+                lsym = .true.               ! symmetry analysis of bands
+            /
+        """
+        calc_dir = self.output_dir / name
+        calc_dir.mkdir(parents=True, exist_ok=True)
+
+        lines = [
+            "&BANDS",
+            f"  prefix = '{name}'",
+            f"  outdir = './tmp'",
+            f"  filband = '{name}.bands.dat'",
+            f"  lsym = .true.",
+            "/",
+        ]
+
+        bands_pp_file = calc_dir / f"{name}.bands_pp.in"
+        with open(bands_pp_file, "w") as f:
+            f.write("\n".join(lines) + "\n")
+
+        logger.info(f"Generated QE bands.x input: {bands_pp_file}")
+        return bands_pp_file
+
+    def generate_master_script(self, names: list[str], nprocs: int = 4) -> Path:
+        """
+        Generate a master bash script that runs all DFT calculations sequentially.
+
+        CALCULATION SEQUENCE PER CANDIDATE:
+            1. pw.x SCF        (~10-60 min)  - ground state
+            2. pw.x NSCF       (~5-30 min)   - dense k-grid eigenvalues
+            3. dos.x           (~1 min)       - density of states
+            4. pw.x bands      (~5-30 min)   - band structure along k-path
+            5. bands.x         (~1 min)       - post-process bands
+
+        TOTAL ESTIMATED TIME:
+            ~30-120 min per candidate with 4 MPI processes on 16 threads.
+            For 5 candidates: ~2.5-10 hours total.
+
+        WSL2 PATH CONVERSION:
+            Windows D:\\MXDiscovery -> WSL /mnt/d/MXDiscovery
+        """
+        wsl_base = "/mnt/d/MXDiscovery"
+        wsl_dft_dir = f"{wsl_base}/data/results/dft"
+        wsl_pseudo = f"{wsl_base}/data/pseudopotentials"
+
+        lines = [
+            "#!/bin/bash",
+            "# =================================================================",
+            "#  MXDiscovery Stage 6: DFT Validation with Quantum ESPRESSO",
+            "# =================================================================",
+            "#  Auto-generated master script for WSL2 execution.",
+            "#",
+            "#  USAGE:",
+            "#    From WSL2 terminal:",
+            f"#    cd {wsl_dft_dir}",
+            "#    bash run_all_dft.sh 2>&1 | tee dft_log.txt",
+            "#",
+            "#  REQUIREMENTS:",
+            "#    - Quantum ESPRESSO installed (sudo apt install quantum-espresso)",
+            "#    - Pseudopotentials downloaded to data/pseudopotentials/",
+            "#    - Sufficient disk space (~500MB per candidate for tmp files)",
+            "# =================================================================",
+            "",
+            f"NPROCS={nprocs}",
+            f"PSEUDO_DIR={wsl_pseudo}",
+            "",
+            "echo '========================================'",
+            "echo '  MXDiscovery DFT Validation Pipeline'",
+            "echo '========================================'",
+            "echo \"Started: $(date)\"",
+            "echo \"Using $NPROCS MPI processes\"",
+            "echo ''",
+            "",
+        ]
+
+        for i, name in enumerate(names, 1):
+            calc_dir = f"{wsl_dft_dir}/{name}"
+            lines.extend([
+                f"# --- Candidate {i}/{len(names)}: {name} ---",
+                f"echo '--- [{i}/{len(names)}] {name} ---'",
+                f"cd {calc_dir}",
+                "mkdir -p tmp",
+                "",
+                f"# Step 1: SCF (self-consistent field)",
+                f"echo \"  SCF starting: $(date)\"",
+                f"mpirun -np $NPROCS pw.x < {name}.scf.in > {name}.scf.out 2>&1",
+                f"if grep -q 'convergence has been achieved' {name}.scf.out; then",
+                f"  echo '  SCF: CONVERGED'",
+                f"else",
+                f"  echo '  SCF: FAILED - check {name}.scf.out'",
+                f"  echo 'Skipping remaining calculations for {name}'",
+                # Don't exit, continue to next candidate
+                f"  cd {wsl_dft_dir}",
+                f"  # skip to next candidate",
+                f"  echo ''",
+                f"  continue 2>/dev/null || true",
+                f"fi",
+                "",
+                f"# Step 2: NSCF (dense k-grid for DOS)",
+                f"echo \"  NSCF starting: $(date)\"",
+                f"mpirun -np $NPROCS pw.x < {name}.nscf.in > {name}.nscf.out 2>&1",
+                f"echo '  NSCF: done'",
+                "",
+                f"# Step 3: DOS",
+                f"echo \"  DOS starting: $(date)\"",
+                f"dos.x < {name}.dos.in > {name}.dos.out 2>&1",
+                f"echo '  DOS: done'",
+                "",
+                f"# Step 4: Bands (k-path)",
+                f"echo \"  Bands starting: $(date)\"",
+                f"mpirun -np $NPROCS pw.x < {name}.bands.in > {name}.bands.out 2>&1",
+                f"echo '  Bands pw.x: done'",
+                "",
+                f"# Step 5: Bands post-processing",
+                f"bands.x < {name}.bands_pp.in > {name}.bands_pp.out 2>&1",
+                f"echo '  Bands post-process: done'",
+                "",
+                f"echo \"  {name} COMPLETE: $(date)\"",
+                f"echo ''",
+                "",
+            ])
+
+        lines.extend([
+            "echo '========================================'",
+            "echo '  All DFT calculations complete!'",
+            "echo \"Finished: $(date)\"",
+            "echo '========================================'",
+        ])
+
+        master_script = self.output_dir / "run_all_dft.sh"
+        with open(master_script, "w", newline="\n") as f:
+            f.write("\n".join(lines) + "\n")
+
+        logger.info(f"Generated master DFT script: {master_script}")
+        return master_script
+
+    def parse_dos_output(self, dos_file: str | Path) -> dict:
+        """
+        Parse dos.x output file for bandgap and DOS features.
+
+        DOS FILE FORMAT (space-separated):
+            # E (eV)   dos(E)   pdos(E)
+            -10.000    0.0000   0.0000
+            ...
+
+        BANDGAP DETECTION:
+            1. Find the Fermi energy region
+            2. Look for energy range where DOS ~ 0 around Fermi level
+            3. If DOS never drops to ~0 near E_F -> metallic (gap = 0)
+            4. Otherwise, gap = E_CBM - E_VBM
+
+        RETURNS:
+            {
+                "bandgap_ev": float or 0.0,
+                "is_metallic": bool,
+                "dos_at_fermi": float,
+                "vbm_ev": float,  # valence band maximum
+                "cbm_ev": float,  # conduction band minimum
+            }
+        """
+        dos_file = Path(dos_file)
+        if not dos_file.exists():
+            return {"error": f"File not found: {dos_file}"}
+
+        energies = []
+        dos_values = []
+
+        with open(dos_file) as f:
+            for line in f:
+                line = line.strip()
+                if not line or line.startswith("#"):
+                    continue
+                parts = line.split()
+                if len(parts) >= 2:
+                    try:
+                        energies.append(float(parts[0]))
+                        dos_values.append(float(parts[1]))
+                    except ValueError:
+                        continue
+
+        if not energies:
+            return {"error": "No DOS data found"}
+
+        import numpy as np
+        energies = np.array(energies)
+        dos_values = np.array(dos_values)
+
+        # Find DOS at Fermi level (E=0 in QE dos output, relative to E_F)
+        fermi_idx = np.argmin(np.abs(energies))
+        dos_at_fermi = dos_values[fermi_idx]
+
+        # Detect bandgap: find region near E_F where DOS < threshold
+        threshold = 0.01 * np.max(dos_values)  # 1% of max DOS
+
+        # Look for gap around Fermi level
+        near_fermi = np.abs(energies) < 5.0  # within 5 eV of Fermi
+        low_dos = dos_values < threshold
+
+        # Find VBM (highest energy below E_F with significant DOS)
+        below_fermi = (energies < 0) & near_fermi
+        if np.any(below_fermi & ~low_dos):
+            vbm_candidates = energies[below_fermi & ~low_dos]
+            vbm = np.max(vbm_candidates)
+        else:
+            vbm = 0.0
+
+        # Find CBM (lowest energy above E_F with significant DOS)
+        above_fermi = (energies > 0) & near_fermi
+        if np.any(above_fermi & ~low_dos):
+            cbm_candidates = energies[above_fermi & ~low_dos]
+            cbm = np.min(cbm_candidates)
+        else:
+            cbm = 0.0
+
+        bandgap = max(0.0, cbm - vbm)
+        is_metallic = dos_at_fermi > threshold
+
+        return {
+            "bandgap_ev": bandgap if not is_metallic else 0.0,
+            "is_metallic": bool(is_metallic),
+            "dos_at_fermi": float(dos_at_fermi),
+            "vbm_ev": float(vbm),
+            "cbm_ev": float(cbm),
+        }
